@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - ProjectHub</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; }
+        .header { background: white; padding: 20px 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { color: #667eea; font-size: 24px; }
+        .user-info { display: flex; align-items: center; gap: 20px; }
+        .logout-btn { padding: 8px 16px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .nav { background: white; margin: 20px 40px; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .nav a { margin-right: 20px; color: #667eea; text-decoration: none; font-weight: 500; }
+        .container { padding: 20px 40px; }
+        .toolbar { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+        .toolbar input, .toolbar select { padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        .toolbar button { padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; }
+        .toolbar button:hover { background: #5568d3; }
+        .projects-table { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8f9fa; padding: 15px; text-align: left; font-weight: 600; color: #333; border-bottom: 2px solid #e9ecef; }
+        td { padding: 15px; border-bottom: 1px solid #e9ecef; }
+        .badge { padding: 5px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .badge.active { background: #d4edda; color: #155724; }
+        .badge.planning { background: #fff3cd; color: #856404; }
+        .badge.completed { background: #d1ecf1; color: #0c5460; }
+        .badge.high { background: #f8d7da; color: #721c24; }
+        .badge.medium { background: #fff3cd; color: #856404; }
+        .badge.low { background: #d1ecf1; color: #0c5460; }
+        .actions button { padding: 5px 10px; margin-right: 5px; border: none; border-radius: 3px; cursor: pointer; font-size: 12px; }
+        .edit-btn { background: #667eea; color: white; }
+        .delete-btn { background: #e74c3c; color: white; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 500px; }
+        .modal-content h2 { margin-bottom: 20px; color: #333; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #555; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .modal-actions button { flex: 1; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; }
+        .save-btn { background: #667eea; color: white; }
+        .cancel-btn { background: #6c757d; color: white; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ProjectHub</h1>
+        <div class="user-info">
+            <span class="user-name" data-testid="user-name"></span>
+            <button class="logout-btn" data-testid="logout-button">Logout</button>
+        </div>
+    </div>
+    <div class="nav">
+        <a href="/dashboard" data-testid="nav-dashboard">Dashboard</a>
+        <a href="/projects" data-testid="nav-projects">Projects</a>
+    </div>
+    <div class="container">
+        <div class="toolbar">
+            <input type="text" placeholder="Search projects..." data-testid="search-input">
+            <select data-testid="status-filter">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="planning">Planning</option>
+                <option value="completed">Completed</option>
+            </select>
+            <select data-testid="priority-filter">
+                <option value="">All Priority</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+            </select>
+            <button data-testid="filter-button">Filter</button>
+            <button data-testid="create-project-button">Create Project</button>
+        </div>
+        <div class="projects-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Owner</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody data-testid="projects-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="modal" data-testid="project-modal">
+        <div class="modal-content">
+            <h2 data-testid="modal-title">Create Project</h2>
+            <form id="projectForm">
+                <div class="form-group">
+                    <label>Project Name</label>
+                    <input type="text" data-testid="project-name-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select data-testid="project-status-input" required>
+                        <option value="planning">Planning</option>
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select data-testid="project-priority-input" required>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea data-testid="project-description-input" rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="save-btn" data-testid="save-project-button">Save</button>
+                    <button type="button" class="cancel-btn" data-testid="cancel-button">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        let currentProjectId = null;
+        
+        if (!token) window.location.href = '/';
+        
+        document.querySelector('.user-name').textContent = user.name || 'User';
+        document.querySelector('.logout-btn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = '/';
+        });
+        
+        async function loadProjects(filters = {}) {
+            const params = new URLSearchParams(filters);
+            const response = await fetch(`/api/projects?${params}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            
+            const tbody = document.querySelector('[data-testid="projects-table-body"]');
+            tbody.innerHTML = data.data.map(p => `
+                <tr data-testid="project-row-${p.id}">
+                    <td>${p.name}</td>
+                    <td><span class="badge ${p.status}">${p.status}</span></td>
+                    <td><span class="badge ${p.priority}">${p.priority}</span></td>
+                    <td>${p.owner}</td>
+                    <td>${p.createdAt}</td>
+                    <td class="actions">
+                        <button class="edit-btn" data-testid="edit-${p.id}" onclick="editProject('${p.id}')">Edit</button>
+                        <button class="delete-btn" data-testid="delete-${p.id}" onclick="deleteProject('${p.id}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        document.querySelector('[data-testid="filter-button"]').addEventListener('click', () => {
+            const filters = {
+                search: document.querySelector('[data-testid="search-input"]').value,
+                status: document.querySelector('[data-testid="status-filter"]').value,
+                priority: document.querySelector('[data-testid="priority-filter"]').value
+            };
+            loadProjects(filters);
+        });
+        
+        document.querySelector('[data-testid="create-project-button"]').addEventListener('click', () => {
+            currentProjectId = null;
+            document.querySelector('[data-testid="modal-title"]').textContent = 'Create Project';
+            document.getElementById('projectForm').reset();
+            document.querySelector('[data-testid="project-modal"]').classList.add('active');
+        });
+        
+        document.querySelector('[data-testid="cancel-button"]').addEventListener('click', () => {
+            document.querySelector('[data-testid="project-modal"]').classList.remove('active');
+        });
+        
+        document.getElementById('projectForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                name: document.querySelector('[data-testid="project-name-input"]').value,
+                status: document.querySelector('[data-testid="project-status-input"]').value,
+                priority: document.querySelector('[data-testid="project-priority-input"]').value,
+                description: document.querySelector('[data-testid="project-description-input"]').value
+            };
+            
+            const url = currentProjectId ? `/api/projects/${currentProjectId}` : '/api/projects';
+            const method = currentProjectId ? 'PUT' : 'POST';
+            
+            await fetch(url, {
+                method,
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            document.querySelector('[data-testid="project-modal"]').classList.remove('active');
+            loadProjects();
+        });
+        
+        window.editProject = async (id) => {
+            currentProjectId = id;
+            const response = await fetch(`/api/projects/${id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            const project = data.data;
+            
+            document.querySelector('[data-testid="modal-title"]').textContent = 'Edit Project';
+            document.querySelector('[data-testid="project-name-input"]').value = project.name;
+            document.querySelector('[data-testid="project-status-input"]').value = project.status;
+            document.querySelector('[data-testid="project-priority-input"]').value = project.priority;
+            document.querySelector('[data-testid="project-description-input"]').value = project.description;
+            document.querySelector('[data-testid="project-modal"]').classList.add('active');
+        };
+        
+        window.deleteProject = async (id) => {
+            if (confirm('Are you sure you want to delete this project?')) {
+                await fetch(`/api/projects/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                loadProjects();
+            }
+        };
+        
+        loadProjects();
+    </script>
+</body>
+</html>
